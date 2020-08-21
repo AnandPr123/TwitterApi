@@ -89,7 +89,6 @@ func maxRetweeter(c *gin.Context) {
 	db := getDatabase()
 	defer db.Close()
 	client := getClient(c)
-	//  show user recent tweets
 	tweets := getTweets(c, client)
 
 	fmt.Printf("Length of user tweet %d\n", len(tweets))
@@ -112,7 +111,7 @@ func maxRetweeter(c *gin.Context) {
 	})
 }
 
-//Worker function which will update the count map by
+//Worker function
 func worker(id int, twitID int64, client *twitter.Client, db *gorm.DB, wg *sync.WaitGroup) {
 	defer wg.Done()
 	twits, _, _ := client.Statuses.Retweets(twitID, &twitter.StatusRetweetsParams{Count: 100})
