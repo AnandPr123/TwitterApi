@@ -131,9 +131,5 @@ func worker(id int, twitID int64, client *twitter.Client, db *gorm.DB, wg *sync.
 func main() {
 	router := gin.Default()
 	router.GET("/twitter/retweets/:userHandle/max", maxRetweeter)
-	router.GET("/twitter/tweet/:user_handle/latest", func(c *gin.Context) {
-		userHandle := c.Param("userHandle")
-		c.String(http.StatusOK, "Hello %s get ready to get your latest tweat", userHandle)
-	})
 	router.Run(":8080")
 }
