@@ -30,10 +30,12 @@ func getDatabase() (db *gorm.DB) {
 		panic("failed to connect database")
 	}
 	db.Exec("drop table finaltable;")
-	db.Debug().DropTableIfExists(&Retweeters{})
+	db.Debug().DropTableIfExists(&Retweeters{}) // create table if not exist
 	db.Debug().AutoMigrate(&Retweeters{})
 	return db
 }
+
+//use env variables or property file to read
 func getClient(c *gin.Context) (client *twitter.Client) {
 	var flags flagstweet
 
@@ -46,7 +48,7 @@ func getClient(c *gin.Context) (client *twitter.Client) {
 	if flags.ConsumerKey == "" || flags.ConsumerSecret == "" || userHandle == "" {
 		log.Fatal("Application Access Token and userhandle required")
 	}
-
+	// ozzo-validation use two different error message
 	// oauth2 configures a client that uses app credentials to keep a fresh token
 	config := &clientcredentials.Config{
 		ClientID:     flags.ConsumerKey,
@@ -60,8 +62,10 @@ func getClient(c *gin.Context) (client *twitter.Client) {
 	client = twitter.NewClient(httpClient)
 	return client
 }
+
+//use timeout
 func getTweets(c *gin.Context, client *twitter.Client) []twitter.Tweet {
-	userHandle := c.Param("userHandle")
+	userHandle := c.Param("userHandle") //use one only
 	falsevalue := false
 	truevalue := true
 	UserTimelineParams := &twitter.UserTimelineParams{
@@ -70,16 +74,16 @@ func getTweets(c *gin.Context, client *twitter.Client) []twitter.Tweet {
 		IncludeRetweets: &falsevalue,
 		ExcludeReplies:  &truevalue,
 	}
-	tweets, _, _ := client.Timelines.UserTimeline(UserTimelineParams)
+	tweets, _, _ := client.Timelines.UserTimeline(UserTimelineParams) //use error
 	return tweets
 }
 
 func getMostActiveRetweeter(db *gorm.DB, lengthOfTweets int, userHandle string) string {
 	db.Exec("ALTER DATABASE twitter CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci;")
-	db.Exec("CREATE TABLE `finaltable` LIKE `Retweeters`;")
-	db.Exec("INSERT INTO `finaltable` (`User`, `Retweet`) SELECT `User`, `Retweet` FROM `Retweeters` ORDER BY `Retweet` desc;")
+	// db.Exec("CREATE TABLE `finaltable` LIKE `Retweeters`;")
+	//db.Exec("INSERT INTO `finaltable` (`User`, `Retweet`) SELECT `User`, `Retweet` FROM `Retweeters` ORDER BY `Retweet` desc;")
 	var result Retweeters
-	db.Raw("select * from finaltable limit 1").Scan(&result)
+	db.Raw("select * from retweeters order by retweet limit 1").Scan(&result) // Need to work and handle error
 	mostActiveRetweeter := result.User
 	fmt.Printf("The most active retweeter of the last %+v tweets of %+v is %+v", lengthOfTweets, userHandle, mostActiveRetweeter)
 	return mostActiveRetweeter
@@ -96,9 +100,10 @@ func maxRetweeter(c *gin.Context) {
 	var wg sync.WaitGroup
 	lengthOfTweets := 100
 	if len(tweets) < 100 {
-		lengthOfTweets = len(tweets)
+		lengthOfTweets = len(tweets) //make this a function
 	}
-	for i := 0; i < lengthOfTweets; i++ {
+
+	for i := 0; i < lengthOfTweets; i++ { //see this
 		wg.Add(1)
 		twitID := tweets[i].ID
 		go worker(i, twitID, client, db, &wg)
@@ -114,15 +119,16 @@ func maxRetweeter(c *gin.Context) {
 //Worker function
 func worker(id int, twitID int64, client *twitter.Client, db *gorm.DB, wg *sync.WaitGroup) {
 	defer wg.Done()
-	twits, _, _ := client.Statuses.Retweets(twitID, &twitter.StatusRetweetsParams{Count: 100})
+	twits, _, _ := client.Statuses.Retweets(twitID, &twitter.StatusRetweetsParams{Count: 100}) //handle errors
 	for _, twit := range twits {
+		// map[twit]=map[twit]+1
 		var retwet Retweeters
 		retwitName := twit.User.Name
 		db.Raw("select * from retweeters where user=?", retwitName).Scan(&retwet)
 		if retwet.User != "" {
-			db.Exec("UPDATE Retweeters SET retweet = retweet+1 WHERE user = ?", retwitName)
+			db.Exec("UPDATE Retweeters SET retweet = retweet+1 WHERE user = ?", retwitName) //handle errors
 		} else {
-			db.Create(&Retweeters{User: retwitName, Retweet: 1})
+			db.Create(&Retweeters{User: retwitName, Retweet: 1}) //handle errors
 		}
 	}
 }
