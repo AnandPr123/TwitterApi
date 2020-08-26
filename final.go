@@ -89,8 +89,7 @@ func getClient(c *gin.Context, userHandle string) (client *twitter.Client) {
 	if userHandle == "" {
 		log.Fatal("Userhandle required")
 	}
-	// ozzo-validation ---------------------------------------------------------------remaining
-
+	// ozzo-validation
 	// oauth2 configures a client that uses app credentials to keep a fresh token
 	config := &clientcredentials.Config{
 		ClientID:     keys.Key,
