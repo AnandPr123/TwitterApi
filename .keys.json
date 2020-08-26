@@ -1,5 +1,5 @@
 {
     "comment": "Remove this comment field and rename this file to .keys.json",
-    "consumer_key": "ruVEFtsCuBe19K8DIO4RQ7bJi",
-    "consumer_secret": "GOGsRxWK9SCALTIxtu3H3ZjRQEO4Bbxx3xzrVzWtKQ0PuTf0lJ"
+    "consumer_key": "<PUT YOUR CONSUMER KEY HERE>",
+    "consumer_secret": "<PUT YOUR CONSUMER SECRET HERE>"
 }
