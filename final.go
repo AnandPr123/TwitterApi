@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 
@@ -13,6 +14,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
+	"gopkg.in/yaml.v2"
 )
 
 type Retweeters struct {
@@ -140,6 +142,32 @@ func maxRetweeter(c *gin.Context) {
 		"maxRetweeter": mostActiveRetweeter,
 	})
 }
+func YAMLHandler(yamlBytes []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	pathUrls, err := parseYaml(yamlBytes)
+	if err != nil {
+		return nil, err
+	}
+	pathsToUrls := buildMap(pathUrls)
+	return MapHandler(pathsToUrls, fallback), nil
+}
+
+func buildMap(pathUrls []pathURL) map[string]string {
+	pathsToUrls := make(map[string]string)
+	for _, pu := range pathUrls {
+		pathsToUrls[pu.Path] = pu.URL
+	}
+	return pathsToUrls
+}
+
+func parseYaml(data []byte) ([]pathURL, error) {
+	var pathUrls []pathURL
+	err := yaml.Unmarshal(data, &pathUrls)
+	if err != nil {
+		return nil, err
+	}
+	return pathUrls, nil
+}
+
 func latestTweet(c *gin.Context) {
 	db, queryIdentifier := getDatabase()
 	defer db.Close()
